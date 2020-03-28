@@ -13,7 +13,12 @@ volatile enum BRAVO_STATE stateBRAVO=BOOT;
 volatile enum BRAVO_WAVE_50HZ waveBRAVO=AA;
 volatile uint16_t waveindBRAVO=0;
 
-volatile uint32_t PULSE_B[1]={10000};
+volatile uint32_t NewDutyB=MIN_PULSE;
+volatile uint32_t NewDutyA=MIN_PULSE;
+
+volatile uint8_t Polka=0;
+
+uint16_t tmp=0;
 
 // *** RTOS *** //
 qTask_t LedTask, FirstRunTask;
@@ -35,6 +40,7 @@ void HRTIM_FLT_StartTask_Callback(void)
 		DRV_ON();
 
 		// reset Wave
+		Polka=0;
 		waveindBRAVO=0;
 		waveBRAVO=AA;
 		LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin|MCU_50HZ2_Pin);
@@ -44,7 +50,7 @@ void HRTIM_FLT_StartTask_Callback(void)
 		LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA1 | LL_HRTIM_OUTPUT_TC1);
 
 		LL_HRTIM_TIM_CounterEnable(HRTIM1, LL_HRTIM_TIMER_MASTER | LL_HRTIM_TIMER_A | LL_HRTIM_TIMER_C
-				| LL_HRTIM_TIMER_E);
+				| LL_HRTIM_TIMER_E );
 }
 
 void HRTIM_FLT_StopTask_Callback(void)
@@ -53,6 +59,7 @@ void HRTIM_FLT_StopTask_Callback(void)
 		DRV_OFF();
 
 		// reset Wave
+		Polka=0;
 		waveindBRAVO=0;
 		waveBRAVO=AA;
 		LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin|MCU_50HZ2_Pin);
@@ -64,7 +71,7 @@ void HRTIM_FLT_StopTask_Callback(void)
 		LL_HRTIM_DisableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA1 | LL_HRTIM_OUTPUT_TC1);
 
 		LL_HRTIM_TIM_CounterDisable(HRTIM1, LL_HRTIM_TIMER_MASTER | LL_HRTIM_TIMER_A | LL_HRTIM_TIMER_C
-				| LL_HRTIM_TIMER_E);
+				| LL_HRTIM_TIMER_E );
 }
 
 void FirstRunTask_Callback(qEvent_t e)
@@ -94,11 +101,14 @@ void FirstRunTask_Callback(qEvent_t e)
 				/* Master - Enable repetition interrupt */
 				LL_HRTIM_EnableIT_REP(HRTIM1, LL_HRTIM_TIMER_MASTER);
 
-				/* E - Enable Capture 1 interrupt */
-				LL_HRTIM_EnableDMAReq_CPT1(HRTIM1, LL_HRTIM_TIMER_E);
+				/* E - Enable CPT1 interrupt */
+				LL_HRTIM_EnableIT_CPT1(HRTIM1, LL_HRTIM_TIMER_E);
 
-				/* C - Enable Capture 1 interrupt */
-				LL_HRTIM_EnableDMAReq_REP(HRTIM1, LL_HRTIM_TIMER_C);
+				/* E - Enable CPT2 interrupt */
+				//LL_HRTIM_EnableIT_CPT2(HRTIM1, LL_HRTIM_TIMER_E);
+
+				/* D - Enable CPT1 interrupt */
+				//LL_HRTIM_EnableIT_CPT1(HRTIM1, LL_HRTIM_TIMER_D);
 
 				CheckPerek();
 			}
@@ -147,6 +157,9 @@ void BRAVO_Init(void) {
 	VCC15V_OFF();
 	DRV_OFF();
 
+	/* Enable comparator */
+	LL_COMP_Enable(COMP2);
+
 	qOS_Setup(NULL, TIMER_TICK, IdleTask_Callback);
 
 	// LEDTAsk
@@ -166,11 +179,28 @@ void BRAVO_Run(void) {
 	qOS_Run();
 }
 
+void BRAVO_DCPT1(void)
+{
+	Polka=1;
+}
+
+void BRAVO_ECPT2(void)
+{
+	NewDutyA=(uint32_t)(HRTIM1->sTimerxRegs[4].CPT2xR)-MAX_PULSE;
+}
+
+void BRAVO_ECPT1(void)
+{
+	NewDutyB=(uint32_t)(HRTIM1->sTimerxRegs[4].CPT1xR);
+	HRTIM1->sTimerxRegs[2].CMP2xR=NewDutyB;
+}
+
 void BRAVO_MRep(void)
 {
 
 	//reset if overroll
 	if (waveindBRAVO==0) {
+		Polka=0;
 		//
 		DRV_ON();
 
@@ -192,6 +222,21 @@ void BRAVO_MRep(void)
 		DRV_OFF();
 	} else {
 		LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_1, Sin_Etalon[waveindBRAVO]);
+
+		NewDutyA=MAX_PULSE;
+		HRTIM1->sTimerxRegs[0].CMP2xR=NewDutyA;
+		HRTIM1->sTimerxRegs[2].CMP2xR=NewDutyB;
+		//HRTIM1->sTimerxRegs[0].CMP2xR=(3400+(Sin_Etalon[waveindBRAVO]*21600)/3500);
+		//
+		/*tmp++;
+		if (tmp>=20) {
+			tmp=0;
+		}
+		if (tmp<10) {
+			HRTIM1->sTimerxRegs[0].CMP2xR=10000;
+		} else {
+			HRTIM1->sTimerxRegs[0].CMP2xR=25000;
+		}*/
 	}
 
 	LL_DAC_TrigSWConversion(DAC1, LL_DAC_CHANNEL_1);

@@ -16,7 +16,10 @@ extern volatile enum BRAVO_STATE stateBRAVO;
 extern volatile enum BRAVO_WAVE_50HZ waveBRAVO;
 extern volatile uint16_t waveindBRAVO;
 
-extern volatile uint32_t PULSE_B[1];
+extern volatile uint32_t NewDutyB;
+extern volatile uint32_t NewDutyA;
+
+extern volatile uint8_t Polka;
 
 // *** RTOS *** //
 extern qTask_t LedTask, FirstRunTask;
@@ -33,6 +36,9 @@ void FirstRunTask_Callback(qEvent_t e);
 void BRAVO_Init(void);
 void BRAVO_Run(void);
 void BRAVO_MRep(void);
+void BRAVO_ECPT1(void);
+void BRAVO_ECPT2(void);
+void BRAVO_DCPT1(void);
 void BRAVO_Init_VDac(void);
 
 // *** VCC API *** //

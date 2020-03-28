@@ -241,34 +241,6 @@ void DMA1_Channel4_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles DMA1 channel5 global interrupt.
-  */
-void DMA1_Channel5_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Channel5_IRQn 0 */
-
-  /* USER CODE END DMA1_Channel5_IRQn 0 */
-  
-  /* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
-
-  /* USER CODE END DMA1_Channel5_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA1 channel7 global interrupt.
-  */
-void DMA1_Channel7_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Channel7_IRQn 0 */
-
-  /* USER CODE END DMA1_Channel7_IRQn 0 */
-  
-  /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
-
-  /* USER CODE END DMA1_Channel7_IRQn 1 */
-}
-
-/**
   * @brief This function handles ADC1 and ADC2 interrupts.
   */
 void ADC1_2_IRQHandler(void)
@@ -347,6 +319,28 @@ void HRTIM1_Master_IRQHandler(void)
   /* USER CODE BEGIN HRTIM1_Master_IRQn 1 */
 
   /* USER CODE END HRTIM1_Master_IRQn 1 */
+}
+
+/**
+  * @brief This function handles HRTIM timer E global interrupt.
+  */
+void HRTIM1_TIME_IRQHandler(void)
+{
+  /* USER CODE BEGIN HRTIM1_TIME_IRQn 0 */
+
+	if (LL_HRTIM_IsActiveFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_E)==1) {
+		LL_HRTIM_ClearFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_E); /* Clear ISR flag */
+		BRAVO_ECPT1();
+	} else {
+		LL_HRTIM_ClearFlag_CPT2(HRTIM1, LL_HRTIM_TIMER_E); /* Clear ISR flag */
+		BRAVO_ECPT2();
+	}
+
+  /* USER CODE END HRTIM1_TIME_IRQn 0 */
+  
+  /* USER CODE BEGIN HRTIM1_TIME_IRQn 1 */
+
+  /* USER CODE END HRTIM1_TIME_IRQn 1 */
 }
 
 /**
