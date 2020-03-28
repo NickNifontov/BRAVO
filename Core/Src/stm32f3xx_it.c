@@ -338,25 +338,15 @@ void HRTIM1_Master_IRQHandler(void)
 {
   /* USER CODE BEGIN HRTIM1_Master_IRQn 0 */
 
+	  LL_HRTIM_ClearFlag_REP(HRTIM1, LL_HRTIM_TIMER_MASTER); /* Clear ISR flag */
+
+	  BRAVO_MRep();
+
   /* USER CODE END HRTIM1_Master_IRQn 0 */
   
   /* USER CODE BEGIN HRTIM1_Master_IRQn 1 */
 
   /* USER CODE END HRTIM1_Master_IRQn 1 */
-}
-
-/**
-  * @brief This function handles HRTIM timer E global interrupt.
-  */
-void HRTIM1_TIME_IRQHandler(void)
-{
-  /* USER CODE BEGIN HRTIM1_TIME_IRQn 0 */
-
-  /* USER CODE END HRTIM1_TIME_IRQn 0 */
-  
-  /* USER CODE BEGIN HRTIM1_TIME_IRQn 1 */
-
-  /* USER CODE END HRTIM1_TIME_IRQn 1 */
 }
 
 /**

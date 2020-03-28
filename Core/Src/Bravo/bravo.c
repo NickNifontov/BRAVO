@@ -10,6 +10,8 @@
 
 // *** GLOBAL ***//
 volatile enum BRAVO_STATE stateBRAVO=BOOT;
+volatile enum BRAVO_WAVE_50HZ waveBRAVO=AA;
+volatile uint16_t waveindBRAVO=0;
 
 // *** RTOS *** //
 qTask_t LedTask, FirstRunTask;
@@ -30,6 +32,11 @@ void HRTIM_FLT_StartTask_Callback(void)
 		// Allow Driver
 		DRV_ON();
 
+		// reset Wave
+		waveindBRAVO=0;
+		waveBRAVO=AA;
+		LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin|MCU_50HZ2_Pin);
+
 		LL_HRTIM_TIM_CounterEnable(HRTIM1, LL_HRTIM_TIMER_MASTER);
 }
 
@@ -37,6 +44,11 @@ void HRTIM_FLT_StopTask_Callback(void)
 {
 		// Disable Driver
 		DRV_OFF();
+
+		// reset Wave
+		waveindBRAVO=0;
+		waveBRAVO=AA;
+		LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin|MCU_50HZ2_Pin);
 
 		/* Stop HRTIM's  */
 		LL_HRTIM_TIM_CounterDisable(HRTIM1, LL_HRTIM_TIMER_MASTER);
@@ -66,6 +78,9 @@ void FirstRunTask_Callback(qEvent_t e)
 				LL_HRTIM_EnableIT_FLT2(HRTIM1);
 				LL_HRTIM_EnableIT_SYSFLT(HRTIM1);
 
+				/* Master - Enable repetition interrupt */
+				LL_HRTIM_EnableIT_REP(HRTIM1, LL_HRTIM_TIMER_MASTER);
+
 				CheckPerek();
 			}
 			break;
@@ -77,7 +92,7 @@ void LedTask_Callback(qEvent_t e)
 			switch (stateBRAVO) {
 					case AC:
 					case NOAC:
-						qTask_Set_Time(&LedTask,1.0);
+						qTask_Set_Time(&LedTask,0.5);
 						break;
 					case SD:
 						qTask_Set_Time(&LedTask,0.2);
@@ -131,6 +146,36 @@ void BRAVO_Init(void) {
 void BRAVO_Run(void) {
 	qOS_Run();
 }
+
+void BRAVO_MRep(void)
+{
+	//reset if overroll
+	if (waveindBRAVO==0) {
+		DRV_ON();
+		if (waveBRAVO==AA) {
+			waveBRAVO=BB;
+			LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin);
+			LL_GPIO_SetOutputPin(GPIOA, MCU_50HZ2_Pin);
+		} else {
+			waveBRAVO=AA;
+			LL_GPIO_SetOutputPin(GPIOA, MCU_50HZ1_Pin);
+			LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ2_Pin);
+		}
+	}
+
+	if  (waveindBRAVO>=WAVE_DT_PULSES_R)  {
+		LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin|MCU_50HZ2_Pin);
+		DRV_OFF();
+	}
+
+	if (waveindBRAVO>=WAVE_PARTS) {
+		waveindBRAVO=0;
+	} else {
+		waveindBRAVO++;
+	}
+
+}
+
 
 // *** VCC API *** //
 void VCC15V_ON(void) {

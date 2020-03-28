@@ -12,6 +12,12 @@
 #define TIMER_TICK 0.001 /* 1ms */
 
 // *** GLOBAL *** //
+#define WAVE_PARTS 461 // 0..460
+#define WAVE_DT_PULSES_R 457 // 461.460.459.458.457
+
+#define MREP_CNT 92
+
 enum BRAVO_STATE {NOAC, AC, SD, BOOT, FLT};
+enum BRAVO_WAVE_50HZ {AA,BB};
 
 #endif /* SRC_BRAVO_BRAVO_DEF_H_ */
