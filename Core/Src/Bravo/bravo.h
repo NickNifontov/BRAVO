@@ -9,11 +9,14 @@
 #define SRC_BRAVO_BRAVO_H_
 
 #include "bravo_inc.h"
+#include "bravo_sinus.h"
 
 // *** GLOBAL ***//
 extern volatile enum BRAVO_STATE stateBRAVO;
 extern volatile enum BRAVO_WAVE_50HZ waveBRAVO;
 extern volatile uint16_t waveindBRAVO;
+
+extern volatile uint32_t PULSE_B[1];
 
 // *** RTOS *** //
 extern qTask_t LedTask, FirstRunTask;
@@ -30,6 +33,7 @@ void FirstRunTask_Callback(qEvent_t e);
 void BRAVO_Init(void);
 void BRAVO_Run(void);
 void BRAVO_MRep(void);
+void BRAVO_Init_VDac(void);
 
 // *** VCC API *** //
 void VCC15V_ON(void);

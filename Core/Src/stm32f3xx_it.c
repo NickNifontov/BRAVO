@@ -227,20 +227,6 @@ void DMA1_Channel1_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles DMA1 channel3 global interrupt.
-  */
-void DMA1_Channel3_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Channel3_IRQn 0 */
-
-  /* USER CODE END DMA1_Channel3_IRQn 0 */
-  
-  /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
-
-  /* USER CODE END DMA1_Channel3_IRQn 1 */
-}
-
-/**
   * @brief This function handles DMA1 channel4 global interrupt.
   */
 void DMA1_Channel4_IRQHandler(void)
@@ -269,6 +255,20 @@ void DMA1_Channel5_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA1 channel7 global interrupt.
+  */
+void DMA1_Channel7_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel7_IRQn 0 */
+
+  /* USER CODE END DMA1_Channel7_IRQn 0 */
+  
+  /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel7_IRQn 1 */
+}
+
+/**
   * @brief This function handles ADC1 and ADC2 interrupts.
   */
 void ADC1_2_IRQHandler(void)
@@ -292,7 +292,7 @@ void EXTI15_10_IRQHandler(void)
   /* USER CODE END EXTI15_10_IRQn 0 */
   if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_12) != RESET)
   {
-    //LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
     /* USER CODE BEGIN LL_EXTI_LINE_12 */
 	    CheckPerek();
     	LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);

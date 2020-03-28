@@ -13,6 +13,8 @@ volatile enum BRAVO_STATE stateBRAVO=BOOT;
 volatile enum BRAVO_WAVE_50HZ waveBRAVO=AA;
 volatile uint16_t waveindBRAVO=0;
 
+volatile uint32_t PULSE_B[1]={10000};
+
 // *** RTOS *** //
 qTask_t LedTask, FirstRunTask;
 
@@ -37,7 +39,12 @@ void HRTIM_FLT_StartTask_Callback(void)
 		waveBRAVO=AA;
 		LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin|MCU_50HZ2_Pin);
 
-		LL_HRTIM_TIM_CounterEnable(HRTIM1, LL_HRTIM_TIMER_MASTER);
+		BRAVO_Init_VDac();
+
+		LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA1 | LL_HRTIM_OUTPUT_TC1);
+
+		LL_HRTIM_TIM_CounterEnable(HRTIM1, LL_HRTIM_TIMER_MASTER | LL_HRTIM_TIMER_A | LL_HRTIM_TIMER_C
+				| LL_HRTIM_TIMER_E);
 }
 
 void HRTIM_FLT_StopTask_Callback(void)
@@ -50,8 +57,14 @@ void HRTIM_FLT_StopTask_Callback(void)
 		waveBRAVO=AA;
 		LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin|MCU_50HZ2_Pin);
 
+		LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_1, 0);
+		LL_DAC_TrigSWConversion(DAC1, LL_DAC_CHANNEL_1);
+
 		/* Stop HRTIM's  */
-		LL_HRTIM_TIM_CounterDisable(HRTIM1, LL_HRTIM_TIMER_MASTER);
+		LL_HRTIM_DisableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA1 | LL_HRTIM_OUTPUT_TC1);
+
+		LL_HRTIM_TIM_CounterDisable(HRTIM1, LL_HRTIM_TIMER_MASTER | LL_HRTIM_TIMER_A | LL_HRTIM_TIMER_C
+				| LL_HRTIM_TIMER_E);
 }
 
 void FirstRunTask_Callback(qEvent_t e)
@@ -80,6 +93,12 @@ void FirstRunTask_Callback(qEvent_t e)
 
 				/* Master - Enable repetition interrupt */
 				LL_HRTIM_EnableIT_REP(HRTIM1, LL_HRTIM_TIMER_MASTER);
+
+				/* E - Enable Capture 1 interrupt */
+				LL_HRTIM_EnableDMAReq_CPT1(HRTIM1, LL_HRTIM_TIMER_E);
+
+				/* C - Enable Capture 1 interrupt */
+				LL_HRTIM_EnableDMAReq_REP(HRTIM1, LL_HRTIM_TIMER_C);
 
 				CheckPerek();
 			}
@@ -149,9 +168,12 @@ void BRAVO_Run(void) {
 
 void BRAVO_MRep(void)
 {
+
 	//reset if overroll
 	if (waveindBRAVO==0) {
+		//
 		DRV_ON();
+
 		if (waveBRAVO==AA) {
 			waveBRAVO=BB;
 			LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin);
@@ -164,9 +186,15 @@ void BRAVO_MRep(void)
 	}
 
 	if  (waveindBRAVO>=WAVE_DT_PULSES_R)  {
+		LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_1, 0);
+
 		LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin|MCU_50HZ2_Pin);
 		DRV_OFF();
+	} else {
+		LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_1, Sin_Etalon[waveindBRAVO]);
 	}
+
+	LL_DAC_TrigSWConversion(DAC1, LL_DAC_CHANNEL_1);
 
 	if (waveindBRAVO>=WAVE_PARTS) {
 		waveindBRAVO=0;
@@ -194,4 +222,35 @@ void DRV_OFF(void) {
 void DRV_ON(void) {
 	 	LL_GPIO_SetOutputPin(GPIOB, DRV_SD_EX_Pin); // ON EXT DRV UNBLOCK
 	 	LL_GPIO_ResetOutputPin(GPIOB, DRV_SD_IN_Pin); // ON INT DRV UNBLOCK
+}
+
+// *** DAC *** //
+void BRAVO_Init_VDac(void)
+{
+	/* Set DMA transfer addresses of source and destination */
+	//LL_DMA_ConfigAddresses(DMA1,
+	//                         LL_DMA_CHANNEL_3,
+	//                         (uint32_t)&Sin_Etalon,
+	//                         LL_DAC_DMA_GetRegAddr(DAC1, LL_DAC_CHANNEL_1, LL_DAC_DMA_REG_DATA_12BITS_RIGHT_ALIGNED),
+	//                         LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+	/* Set DMA transfer size */
+	 //LL_DMA_SetDataLength(DMA1,
+	 //                      LL_DMA_CHANNEL_3,
+	//					   WAVE_PARTS);
+
+	 /* Enable DMA transfer interruption: transfer error */
+	  // LL_DMA_EnableIT_TE(DMA1,
+	 //                     LL_DMA_CHANNEL_3);
+
+	 /* Enable the DMA transfer */
+	  // LL_DMA_EnableChannel(DMA1,
+	  //                      LL_DMA_CHANNEL_3);
+
+	   /* Enable DAC channel DMA request */
+	   //  LL_DAC_EnableDMAReq(DAC1, LL_DAC_CHANNEL_1);
+
+	     /* Enable DAC channel */
+	      LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_1);
+	      LL_DAC_EnableTrigger(DAC1, LL_DAC_CHANNEL_1);
+
 }
