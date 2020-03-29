@@ -310,9 +310,16 @@ void HRTIM1_Master_IRQHandler(void)
 {
   /* USER CODE BEGIN HRTIM1_Master_IRQn 0 */
 
-	  LL_HRTIM_ClearFlag_REP(HRTIM1, LL_HRTIM_TIMER_MASTER); /* Clear ISR flag */
+	if  (LL_HRTIM_IsActiveFlag_REP(HRTIM1, LL_HRTIM_TIMER_MASTER)==1) {
+		LL_HRTIM_ClearFlag_REP(HRTIM1, LL_HRTIM_TIMER_MASTER);
+		BRAVO_MRep();
+	}
 
-	  BRAVO_MRep();
+	if  (LL_HRTIM_IsActiveFlag_CMP1(HRTIM1, LL_HRTIM_TIMER_MASTER)==1) {
+				LL_HRTIM_ClearFlag_CMP1(HRTIM1, LL_HRTIM_TIMER_MASTER);
+				BRAVO_MCMP1();
+	}
+
 
   /* USER CODE END HRTIM1_Master_IRQn 0 */
   
@@ -322,18 +329,44 @@ void HRTIM1_Master_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles HRTIM timer D global interrupt.
+  */
+void HRTIM1_TIMD_IRQHandler(void)
+{
+  /* USER CODE BEGIN HRTIM1_TIMD_IRQn 0 */
+
+	if  (LL_HRTIM_IsActiveFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_D)==1) {
+			LL_HRTIM_ClearFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_D);
+			BRAVO_CPT1_COMP();
+	}
+
+	if  (LL_HRTIM_IsActiveFlag_CPT2(HRTIM1, LL_HRTIM_TIMER_D)==1) {
+			LL_HRTIM_ClearFlag_CPT2(HRTIM1, LL_HRTIM_TIMER_D);
+			BRAVO_CPT2_COMP();
+	}
+
+  /* USER CODE END HRTIM1_TIMD_IRQn 0 */
+  
+  /* USER CODE BEGIN HRTIM1_TIMD_IRQn 1 */
+
+  /* USER CODE END HRTIM1_TIMD_IRQn 1 */
+}
+
+/**
   * @brief This function handles HRTIM timer E global interrupt.
   */
 void HRTIM1_TIME_IRQHandler(void)
 {
   /* USER CODE BEGIN HRTIM1_TIME_IRQn 0 */
 
-	if (LL_HRTIM_IsActiveFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_E)==1) {
-		LL_HRTIM_ClearFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_E); /* Clear ISR flag */
-		BRAVO_ECPT1();
-	} else {
-		LL_HRTIM_ClearFlag_CPT2(HRTIM1, LL_HRTIM_TIMER_E); /* Clear ISR flag */
-		BRAVO_ECPT2();
+	if  (LL_HRTIM_IsActiveFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_E)==1) {
+			LL_HRTIM_ClearFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_E);
+			BRAVO_CPT1();
+	}
+
+	if  (LL_HRTIM_IsActiveFlag_CPT2(HRTIM1, LL_HRTIM_TIMER_E)==1) {
+			LL_HRTIM_ClearFlag_CPT2(HRTIM1, LL_HRTIM_TIMER_E);
+			BRAVO_CPT2();
 	}
 
   /* USER CODE END HRTIM1_TIME_IRQn 0 */

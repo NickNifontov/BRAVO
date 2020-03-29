@@ -9,16 +9,18 @@
 #include "bravo.h"
 
 // *** GLOBAL ***//
+volatile uint32_t my_DMA_Buffer[2]={0,0};
+
 volatile enum BRAVO_STATE stateBRAVO=BOOT;
 volatile enum BRAVO_WAVE_50HZ waveBRAVO=AA;
 volatile uint16_t waveindBRAVO=0;
 
-volatile uint32_t NewDutyB=MIN_PULSE;
-volatile uint32_t NewDutyA=MIN_PULSE;
+volatile uint32_t PulseB=MIN_PULSE;
+volatile uint32_t PulseA=MIN_PULSE;
 
 volatile uint8_t Polka=0;
 
-uint16_t tmp=0;
+uint16_t tmp,tmp2=0;
 
 // *** RTOS *** //
 qTask_t LedTask, FirstRunTask;
@@ -47,10 +49,10 @@ void HRTIM_FLT_StartTask_Callback(void)
 
 		BRAVO_Init_VDac();
 
-		LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA1 | LL_HRTIM_OUTPUT_TC1);
+		LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA1 | LL_HRTIM_OUTPUT_TC1 );
 
 		LL_HRTIM_TIM_CounterEnable(HRTIM1, LL_HRTIM_TIMER_MASTER | LL_HRTIM_TIMER_A | LL_HRTIM_TIMER_C
-				| LL_HRTIM_TIMER_E );
+				| LL_HRTIM_TIMER_E | LL_HRTIM_TIMER_D);
 }
 
 void HRTIM_FLT_StopTask_Callback(void)
@@ -71,7 +73,7 @@ void HRTIM_FLT_StopTask_Callback(void)
 		LL_HRTIM_DisableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA1 | LL_HRTIM_OUTPUT_TC1);
 
 		LL_HRTIM_TIM_CounterDisable(HRTIM1, LL_HRTIM_TIMER_MASTER | LL_HRTIM_TIMER_A | LL_HRTIM_TIMER_C
-				| LL_HRTIM_TIMER_E );
+				| LL_HRTIM_TIMER_E | LL_HRTIM_TIMER_D);
 }
 
 void FirstRunTask_Callback(qEvent_t e)
@@ -101,8 +103,27 @@ void FirstRunTask_Callback(qEvent_t e)
 				/* Master - Enable repetition interrupt */
 				LL_HRTIM_EnableIT_REP(HRTIM1, LL_HRTIM_TIMER_MASTER);
 
+				/* Master - Enable LL_HRTIM_EnableIT_CMP1 interrupt */
+				LL_HRTIM_EnableIT_CMP1(HRTIM1, LL_HRTIM_TIMER_MASTER);
+
+				/* A - Enable update interrupt */
+				LL_HRTIM_EnableIT_UPDATE(HRTIM1, LL_HRTIM_TIMER_A);
+
+				/* C - Enable update interrupt */
+				LL_HRTIM_EnableIT_UPDATE(HRTIM1, LL_HRTIM_TIMER_C);
+
 				/* E - Enable CPT1 interrupt */
 				LL_HRTIM_EnableIT_CPT1(HRTIM1, LL_HRTIM_TIMER_E);
+
+				/* E - Enable CPT2 interrupt */
+				LL_HRTIM_EnableIT_CPT2(HRTIM1, LL_HRTIM_TIMER_E);
+
+				/* D - Enable CPT1 interrupt */
+				LL_HRTIM_EnableIT_CPT1(HRTIM1, LL_HRTIM_TIMER_D);
+
+				/* D - Enable CPT2 interrupt */
+				LL_HRTIM_EnableIT_CPT2(HRTIM1, LL_HRTIM_TIMER_D);
+
 
 				/* E - Enable CPT2 interrupt */
 				//LL_HRTIM_EnableIT_CPT2(HRTIM1, LL_HRTIM_TIMER_E);
@@ -179,30 +200,104 @@ void BRAVO_Run(void) {
 	qOS_Run();
 }
 
-void BRAVO_DCPT1(void)
+uint32_t CheckPulse(uint32_t CurPulse)
 {
-	Polka=1;
+		uint32_t tmp_Pulse=CurPulse;
+
+		if (tmp_Pulse>MAX_PULSE) {
+			tmp_Pulse=MAX_PULSE;
+		}
+		if (tmp_Pulse<MIN_PULSE) {
+			tmp_Pulse=MIN_PULSE;
+		}
+
+		return tmp_Pulse;
+
 }
 
-void BRAVO_ECPT2(void)
+uint8_t PulseInRange(uint32_t CurPulse)
 {
-	NewDutyA=(uint32_t)(HRTIM1->sTimerxRegs[4].CPT2xR)-MAX_PULSE;
+	uint8_t res_check=1;
+
+	if (CurPulse>MAX_PULSE+DELTA_PULSE_RANGE) {
+		res_check=0;
+	}
+
+	if (CurPulse<MIN_PULSE-DELTA_PULSE_RANGE) {
+			res_check=0;
+	}
+
+	return res_check;
 }
 
-void BRAVO_ECPT1(void)
+void BRAVO_CPT1_COMP(void)
 {
-	NewDutyB=(uint32_t)(HRTIM1->sTimerxRegs[4].CPT1xR);
-	HRTIM1->sTimerxRegs[2].CMP2xR=NewDutyB;
+	// V_COMP
+	//temp_V_Pulse=(uint32_t)(HRTIM1->sTimerxRegs[3].CPT1xR)-DELTA_PULSE;
+	//temp_V_Pulse=(uint32_t)(HRTIM1->sTimerxRegs[3].CPT1xR);
+
+	// we in A
+	//if (PulseInRange(temp_V_Pulse)==1) {
+	//	V_EE=1;
+		//
+	//	NewDutyB=CheckPulse(temp_V_Pulse-DELTA_PULSE);
+	//	HRTIM1->sTimerxRegs[2].CMP2xR=NewDutyB;
+	//}
+}
+
+void BRAVO_CPT2_COMP(void)
+{
+	// Current COMP
+
+}
+
+
+// END of A
+void BRAVO_CPT1(void)
+{
+		PulseB=(uint32_t)(HRTIM1->sTimerxRegs[4].CPT1xR)-DELTA_PULSE;
+		PulseB=CheckPulse(PulseB);
+}
+
+
+// END of B
+void BRAVO_CPT2(void)
+{
+	PulseA=MAX_PULSE;
+	PulseB=MAX_PULSE;
+
+	HRTIM1->sTimerxRegs[0].CMP2xR=PulseA;
+}
+
+void BRAVO_MCMP1(void)
+{
+	HRTIM1->sTimerxRegs[2].CMP2xR=PulseB;
 }
 
 void BRAVO_MRep(void)
 {
+	if (Polka==0) {
+		Polka=1;
+		HRTIM1->sCommonRegs.OENR = HRTIM_OENR_TA1OEN;
+	} else {
+		Polka=0;
+		HRTIM1->sCommonRegs.ODISR = HRTIM_ODISR_TA1ODIS;
+	}
 
 	//reset if overroll
 	if (waveindBRAVO==0) {
+
+		//Default Pulse
+		HRTIM1->sTimerxRegs[0].CMP2xR=MIN_PULSE;
+	    HRTIM1->sTimerxRegs[2].CMP2xR=MIN_PULSE;
+
+	    PulseA=MIN_PULSE;
+	    PulseB=MIN_PULSE;
+
 		Polka=0;
 		//
 		DRV_ON();
+		HRTIM1->sCommonRegs.OENR = HRTIM_OENR_TA1OEN  + HRTIM_OENR_TC1OEN;
 
 		if (waveBRAVO==AA) {
 			waveBRAVO=BB;
@@ -220,23 +315,12 @@ void BRAVO_MRep(void)
 
 		LL_GPIO_ResetOutputPin(GPIOA, MCU_50HZ1_Pin|MCU_50HZ2_Pin);
 		DRV_OFF();
+
+		HRTIM1->sCommonRegs.ODISR = HRTIM_ODISR_TA1ODIS  + HRTIM_ODISR_TC1ODIS;
+
+
 	} else {
 		LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_1, Sin_Etalon[waveindBRAVO]);
-
-		NewDutyA=MAX_PULSE;
-		HRTIM1->sTimerxRegs[0].CMP2xR=NewDutyA;
-		HRTIM1->sTimerxRegs[2].CMP2xR=NewDutyB;
-		//HRTIM1->sTimerxRegs[0].CMP2xR=(3400+(Sin_Etalon[waveindBRAVO]*21600)/3500);
-		//
-		/*tmp++;
-		if (tmp>=20) {
-			tmp=0;
-		}
-		if (tmp<10) {
-			HRTIM1->sTimerxRegs[0].CMP2xR=10000;
-		} else {
-			HRTIM1->sTimerxRegs[0].CMP2xR=25000;
-		}*/
 	}
 
 	LL_DAC_TrigSWConversion(DAC1, LL_DAC_CHANNEL_1);

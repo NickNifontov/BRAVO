@@ -12,12 +12,14 @@
 #include "bravo_sinus.h"
 
 // *** GLOBAL ***//
+extern volatile uint32_t my_DMA_Buffer[2];
+
 extern volatile enum BRAVO_STATE stateBRAVO;
 extern volatile enum BRAVO_WAVE_50HZ waveBRAVO;
 extern volatile uint16_t waveindBRAVO;
 
-extern volatile uint32_t NewDutyB;
-extern volatile uint32_t NewDutyA;
+extern volatile uint32_t PulseB;
+extern volatile uint32_t PulseA;
 
 extern volatile uint8_t Polka;
 
@@ -35,10 +37,18 @@ void FirstRunTask_Callback(qEvent_t e);
 // *** BRAVO *** //
 void BRAVO_Init(void);
 void BRAVO_Run(void);
+
 void BRAVO_MRep(void);
-void BRAVO_ECPT1(void);
-void BRAVO_ECPT2(void);
-void BRAVO_DCPT1(void);
+void BRAVO_MCMP1(void);
+
+void BRAVO_CPT1(void);
+void BRAVO_CPT2(void);
+void BRAVO_CPT1_COMP(void);
+void BRAVO_CPT2_COMP(void);
+
+uint32_t CheckPulse(uint32_t CurPulse);
+uint8_t PulseInRange(uint32_t CurPulse);
+
 void BRAVO_Init_VDac(void);
 
 // *** VCC API *** //
