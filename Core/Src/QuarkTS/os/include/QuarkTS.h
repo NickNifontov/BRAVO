@@ -1,5 +1,5 @@
 /*
-QuarkTS V6.2.1  - A Cooperative OS for small embedded systems
+QuarkTS V6.2.2  - A Cooperative OS for small embedded systems
 GNU General Public License v3 (GPL-3)
 C99 and MISRA-C 2012 Compliant    
 
@@ -84,6 +84,10 @@ Download the user manual here : https://github.com/TECREA/QuarkTS/blob/master/qu
 
     #if( Q_USE_STDINT_H != 1 )
         #warning Disposing standard types can cause portability issues and undefined behaviors. QuarkTS produce similar definitions based on the common sizes of native types, however, this sizes can vary because they are implementation-defined  across different compilers. Use this setting at your own risk.
+    #endif
+
+    #if ( Q_FSM_MAX_NEST_DEPTH < 1 )
+        #error Q_FSM_MAX_NEST_DEPTH must be defined to be greater than or equal to 1.
     #endif
 
     #ifndef Q_TASK_EVENT_FLAGS
