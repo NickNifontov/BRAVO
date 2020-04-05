@@ -23,7 +23,7 @@
 #include "stm32f3xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "bravo.h"
+#include "bravoINV.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -261,13 +261,17 @@ void EXTI15_10_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI15_10_IRQn 0 */
 
+	 if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_12) != RESET)
+	  {
+		 	 bravoCheckPerek();
+		 	 LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
+	  }
+
   /* USER CODE END EXTI15_10_IRQn 0 */
   if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_12) != RESET)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
     /* USER CODE BEGIN LL_EXTI_LINE_12 */
-	    CheckPerek();
-    	LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
     
     /* USER CODE END LL_EXTI_LINE_12 */
   }
@@ -310,16 +314,15 @@ void HRTIM1_Master_IRQHandler(void)
 {
   /* USER CODE BEGIN HRTIM1_Master_IRQn 0 */
 
-	if  (LL_HRTIM_IsActiveFlag_REP(HRTIM1, LL_HRTIM_TIMER_MASTER)==1) {
-		LL_HRTIM_ClearFlag_REP(HRTIM1, LL_HRTIM_TIMER_MASTER);
-		BRAVO_MRep();
-	}
+	//if (LL_HRTIM_IsActiveFlag_REP(HRTIM1,LL_HRTIM_TIMER_MASTER)==1) {
+		bravoMainTimerRep();
+		LL_HRTIM_ClearFlag_REP(HRTIM1,LL_HRTIM_TIMER_MASTER);
+	//}
 
-	if  (LL_HRTIM_IsActiveFlag_CMP1(HRTIM1, LL_HRTIM_TIMER_MASTER)==1) {
-				LL_HRTIM_ClearFlag_CMP1(HRTIM1, LL_HRTIM_TIMER_MASTER);
-				BRAVO_MCMP1();
-	}
-
+	/*if (LL_HRTIM_IsActiveFlag_CMP4(HRTIM1,LL_HRTIM_TIMER_MASTER)==1) {
+		LL_HRTIM_ClearFlag_CMP4(HRTIM1,LL_HRTIM_TIMER_MASTER);
+		bravoSinTableRep();
+	}*/
 
   /* USER CODE END HRTIM1_Master_IRQn 0 */
   
@@ -329,44 +332,30 @@ void HRTIM1_Master_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles HRTIM timer D global interrupt.
-  */
-void HRTIM1_TIMD_IRQHandler(void)
-{
-  /* USER CODE BEGIN HRTIM1_TIMD_IRQn 0 */
-
-	if  (LL_HRTIM_IsActiveFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_D)==1) {
-			LL_HRTIM_ClearFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_D);
-			BRAVO_CPT1_COMP();
-	}
-
-	if  (LL_HRTIM_IsActiveFlag_CPT2(HRTIM1, LL_HRTIM_TIMER_D)==1) {
-			LL_HRTIM_ClearFlag_CPT2(HRTIM1, LL_HRTIM_TIMER_D);
-			BRAVO_CPT2_COMP();
-	}
-
-  /* USER CODE END HRTIM1_TIMD_IRQn 0 */
-  
-  /* USER CODE BEGIN HRTIM1_TIMD_IRQn 1 */
-
-  /* USER CODE END HRTIM1_TIMD_IRQn 1 */
-}
-
-/**
   * @brief This function handles HRTIM timer E global interrupt.
   */
 void HRTIM1_TIME_IRQHandler(void)
 {
   /* USER CODE BEGIN HRTIM1_TIME_IRQn 0 */
 
-	if  (LL_HRTIM_IsActiveFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_E)==1) {
-			LL_HRTIM_ClearFlag_CPT1(HRTIM1, LL_HRTIM_TIMER_E);
-			BRAVO_CPT1();
+	if (LL_HRTIM_IsActiveFlag_REP(HRTIM1,LL_HRTIM_TIMER_E)==1) {
+		bravoSinTableRep();
+		LL_HRTIM_ClearFlag_REP(HRTIM1,LL_HRTIM_TIMER_E);
 	}
 
-	if  (LL_HRTIM_IsActiveFlag_CPT2(HRTIM1, LL_HRTIM_TIMER_E)==1) {
-			LL_HRTIM_ClearFlag_CPT2(HRTIM1, LL_HRTIM_TIMER_E);
-			BRAVO_CPT2();
+	if (LL_HRTIM_IsActiveFlag_CMP2(HRTIM1,LL_HRTIM_TIMER_E)==1) {
+		bravoRetrigVDac();
+		LL_HRTIM_ClearFlag_CMP2(HRTIM1,LL_HRTIM_TIMER_E);
+	}
+
+	if (LL_HRTIM_IsActiveFlag_CMP1(HRTIM1,LL_HRTIM_TIMER_E)==1) {
+		bravoRestoreIDac();
+		LL_HRTIM_ClearFlag_CMP1(HRTIM1,LL_HRTIM_TIMER_E);
+	}
+
+	if (LL_HRTIM_IsActiveFlag_CMP3(HRTIM1,LL_HRTIM_TIMER_E)==1) {
+		bravoRestoreIDac();
+		LL_HRTIM_ClearFlag_CMP3(HRTIM1,LL_HRTIM_TIMER_E);
 	}
 
   /* USER CODE END HRTIM1_TIME_IRQn 0 */
@@ -385,14 +374,14 @@ void HRTIM1_FLT_IRQHandler(void)
 
 	if ( (LL_HRTIM_IsActiveFlag_FLT2(HRTIM1)==1)
 			|| (LL_HRTIM_IsActiveFlag_SYSFLT(HRTIM1)==1)  ) {
-		LL_HRTIM_ClearFlag_FLT2(HRTIM1);
-		LL_HRTIM_ClearFlag_SYSFLT(HRTIM1);
+		bravoFltStopTask();
 
-		HRTIM_FLT_StopTask_Callback();
-
-		stateBRAVO=FLT;
+		bravoSTATE=FLT;
 		qTask_Set_Time(&FirstRunTask,10.0);
 		qTask_Resume(&FirstRunTask);
+
+		LL_HRTIM_ClearFlag_FLT2(HRTIM1);
+		LL_HRTIM_ClearFlag_SYSFLT(HRTIM1);
 	}
 
   /* USER CODE END HRTIM1_FLT_IRQn 0 */

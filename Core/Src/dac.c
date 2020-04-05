@@ -47,7 +47,7 @@ void MX_DAC1_Init(void)
   */
   DAC_InitStruct.TriggerSource = LL_DAC_TRIG_SOFTWARE;
   DAC_InitStruct.WaveAutoGeneration = LL_DAC_WAVE_AUTO_GENERATION_TRIANGLE;
-  DAC_InitStruct.WaveAutoGenerationConfig = LL_DAC_TRIANGLE_AMPLITUDE_7;
+  DAC_InitStruct.WaveAutoGenerationConfig = LL_DAC_TRIANGLE_AMPLITUDE_15;
   DAC_InitStruct.OutputBuffer = LL_DAC_OUTPUT_BUFFER_ENABLE;
   LL_DAC_Init(DAC1, LL_DAC_CHANNEL_1, &DAC_InitStruct);
   LL_DAC_EnableTrigger(DAC1, LL_DAC_CHANNEL_1);

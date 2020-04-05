@@ -31,7 +31,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "bravo.h"
+#include "bravoINV.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -124,9 +124,9 @@ int main(void)
   MX_HRTIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  BRAVO_Init();
+  bravoInit();
 
-  BRAVO_Run();
+  bravoRun();
 
   /* USER CODE END 2 */
 
