@@ -332,6 +332,30 @@ void HRTIM1_Master_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles HRTIM timer D global interrupt.
+  */
+void HRTIM1_TIMD_IRQHandler(void)
+{
+  /* USER CODE BEGIN HRTIM1_TIMD_IRQn 0 */
+
+	if (LL_HRTIM_IsActiveFlag_CPT1(HRTIM1,LL_HRTIM_TIMER_D)==1) {
+		bravo_A_Cap_V();
+		LL_HRTIM_ClearFlag_CPT1(HRTIM1,LL_HRTIM_TIMER_D);
+	}
+
+	if (LL_HRTIM_IsActiveFlag_CPT2(HRTIM1,LL_HRTIM_TIMER_D)==1) {
+		bravo_A_Cap_I();
+		LL_HRTIM_ClearFlag_CPT2(HRTIM1,LL_HRTIM_TIMER_D);
+	}
+
+  /* USER CODE END HRTIM1_TIMD_IRQn 0 */
+  
+  /* USER CODE BEGIN HRTIM1_TIMD_IRQn 1 */
+
+  /* USER CODE END HRTIM1_TIMD_IRQn 1 */
+}
+
+/**
   * @brief This function handles HRTIM timer E global interrupt.
   */
 void HRTIM1_TIME_IRQHandler(void)
@@ -343,19 +367,26 @@ void HRTIM1_TIME_IRQHandler(void)
 		LL_HRTIM_ClearFlag_REP(HRTIM1,LL_HRTIM_TIMER_E);
 	}
 
-	if (LL_HRTIM_IsActiveFlag_CMP2(HRTIM1,LL_HRTIM_TIMER_E)==1) {
+	if (LL_HRTIM_IsActiveFlag_CMP1(HRTIM1,LL_HRTIM_TIMER_E)==1) {
+			bravoCalcA();
+			LL_HRTIM_ClearFlag_CMP1(HRTIM1,LL_HRTIM_TIMER_E);
+		}
+
+
+	if (LL_HRTIM_IsActiveFlag_CMP3(HRTIM1,LL_HRTIM_TIMER_E)==1) {
+		bravoCalcB();
 		bravoRetrigVDac();
+		LL_HRTIM_ClearFlag_CMP3(HRTIM1,LL_HRTIM_TIMER_E);
+	}
+
+	if (LL_HRTIM_IsActiveFlag_CMP2(HRTIM1,LL_HRTIM_TIMER_E)==1) {
+		bravoRestoreIDac();
 		LL_HRTIM_ClearFlag_CMP2(HRTIM1,LL_HRTIM_TIMER_E);
 	}
 
-	if (LL_HRTIM_IsActiveFlag_CMP1(HRTIM1,LL_HRTIM_TIMER_E)==1) {
+	if (LL_HRTIM_IsActiveFlag_CMP4(HRTIM1,LL_HRTIM_TIMER_E)==1) {
 		bravoRestoreIDac();
-		LL_HRTIM_ClearFlag_CMP1(HRTIM1,LL_HRTIM_TIMER_E);
-	}
-
-	if (LL_HRTIM_IsActiveFlag_CMP3(HRTIM1,LL_HRTIM_TIMER_E)==1) {
-		bravoRestoreIDac();
-		LL_HRTIM_ClearFlag_CMP3(HRTIM1,LL_HRTIM_TIMER_E);
+		LL_HRTIM_ClearFlag_CMP4(HRTIM1,LL_HRTIM_TIMER_E);
 	}
 
   /* USER CODE END HRTIM1_TIME_IRQn 0 */

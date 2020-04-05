@@ -26,6 +26,7 @@
 // ****** BRAVO INC ****** //
 #include "bravoDefines.h"
 #include "bravoGLOBAL.h"
+#include "bravoPULSE.h"
 #include "bravo50HZ.h"
 #include "bravoIdleTask.h"
 #include "bravoLedTask.h"
